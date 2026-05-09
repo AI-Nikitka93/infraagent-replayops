@@ -4,10 +4,10 @@
 ```json
 {
   "current_goal": "Prepare InfraAgent ReplayOps for a maximum-signal AMD Developer Hackathon submission.",
-  "current_task": "Local product and submission package are hardened; external submission still requires AMD MI300X live proof, public GitHub, HF Space, video, and slides.",
-  "status": "LOCAL_SUBMISSION_PACKAGE_VERIFIED_BLOCKED_ON_EXTERNAL_PROOF",
-  "active_step": "Runtime truth contract, business lens, readiness gate, market pain map, and submission package verified locally",
-  "next_step": "Run on AMD Developer Cloud MI300X, publish public GitHub and HF Space, record video, publish slide deck, set external URLs, then verify /api/readiness returns GO.",
+  "current_task": "Public GitHub, HF Space, video artifact, slide artifact, public tunnel, and public demo smoke are complete; external submission still requires AMD MI300X live Qwen/vLLM proof.",
+  "status": "PUBLIC_SUBMISSION_PACKAGE_VERIFIED_BLOCKED_ON_AMD_LIVE_VLLM",
+  "active_step": "Public package and HF Space are live; readiness is 4/5 external with live_vllm as the only blocker",
+  "next_step": "Run on AMD Developer Cloud MI300X, start vLLM/Qwen, point the same FastAPI/HF Space contract at the AMD tunnel, and verify /api/readiness returns GO with runtime_proof.backend_mode=live_vllm.",
   "blockers": [],
   "artifacts": [
     "docs/research-report.md",
@@ -38,9 +38,11 @@
     "SLIDES.md",
     "HACKATHON_READINESS.md",
     "docs/market-pain-map.md",
-    ".gitignore"
+    ".gitignore",
+    "submission_assets/infraagent-replayops-demo.mp4",
+    "submission_assets/infraagent-replayops-slides.pdf"
   ],
-  "updated_at": "2026-05-09 03:55 Europe/Minsk"
+  "updated_at": "2026-05-09 04:06 Europe/Minsk"
 }
 ```
 <!-- STATE_JSON_END -->
@@ -56,13 +58,16 @@ Alert Ingestor -> Investigator -> Root Cause Analyst -> Runbook Generator -> Ver
 The gate may request one extra investigation round, but the graph ends with either `ready`, `needs_human_review`, or `failed` before `max_steps` is exceeded.
 
 ## Current Blockers
-No local code blocker. Local API, local UI, public Cloudflare Quick Tunnel rehearsal, runtime truth contract, readiness gate, and submission package are verified. Remaining blockers are external submission blockers: AMD Developer Cloud MI300X live Qwen/vLLM proof, public GitHub URL, HF Space URL, video URL, and slide deck URL.
+No local code blocker. Public GitHub, HF Space, application URL, video artifact, slide artifact, public Cloudflare Tunnel, runtime truth contract, readiness gate, and submission package are verified. Remaining blocker: AMD Developer Cloud MI300X live Qwen/vLLM proof.
 
 ## Local Running Services
 - FastAPI: `http://127.0.0.1:8010` with process `server.py`.
 - Gradio UI: `http://127.0.0.1:7860` with process `app.py`.
-- Public API tunnel: `https://cst-stack-bit-yeah.trycloudflare.com` via local `cloudflared --protocol http2`.
-- Local demo auth: `PUBLIC_API_KEY=test-key`, `INFRAAGENT_API_KEY=test-key`.
+- Public GitHub: `https://github.com/AI-Nikitka93/infraagent-replayops`.
+- Hugging Face Space: `https://huggingface.co/spaces/clendeningantonettie/infraagent-replayops`.
+- Demo app: `https://clendeningantonettie-infraagent-replayops.hf.space`.
+- Public API tunnel: `https://insert-execute-membership-dates.trycloudflare.com` via local `cloudflared --protocol http2`.
+- Local demo auth: generated in `.runtime/local_api_key.txt` and mirrored into the HF Space secret.
 
 ## Latest Verification
 - `python -m compileall agent.py tools.py server.py app.py` passed.
@@ -84,6 +89,12 @@ No local code blocker. Local API, local UI, public Cloudflare Quick Tunnel rehea
 - `/api/readiness` returns strict local/external readiness and lists formal blockers.
 - Browser check on updated local UI reached `READY`, `Score: 100/100`, with Business / Ownership Lens and Submission Readiness visible.
 - `pytest -q` passed: 16 tests.
+- Public GitHub repo created and pushed: `https://github.com/AI-Nikitka93/infraagent-replayops`, commit `71189fb`.
+- HF Space created under `clendeningantonettie/infraagent-replayops`, metadata fixed after the first `CONFIG_ERROR`, and runtime reached `RUNNING`.
+- HF Space browser smoke reached `READY`, showed `fallback_without_live_vllm`, and rendered War Room Packet.
+- Public API tunnel smoke reached `ready`, score `100/100`, runtime `fallback_without_live_vllm`, Qwen critic `skipped`, packet `true`.
+- Live `/api/readiness` now reports local `7/7`, external `4/5`, formal blockers `["live_vllm"]`.
+- Slide artifact and video artifact are public through GitHub raw URLs.
 
 ## Next Step
-Run end-to-end AMD VM rehearsal: start vLLM, start FastAPI, open Cloudflare Tunnel with `CLOUDFLARED_PROTOCOL=http2`, set `INFRAAGENT_API_BASE` and `INFRAAGENT_API_KEY` in HF Spaces, and verify the UI reaches `ready` with `runtime_proof.backend_mode=live_vllm` and Qwen critic `ok`. Then publish public GitHub, HF Space, video, and slide deck, set URLs, and verify `/api/readiness` returns `GO`.
+Run end-to-end AMD VM rehearsal: start vLLM, start FastAPI, open Cloudflare Tunnel with `CLOUDFLARED_PROTOCOL=http2`, update `INFRAAGENT_API_BASE` and `INFRAAGENT_API_KEY` in HF Spaces if the AMD tunnel URL changes, and verify the UI reaches `ready` with `runtime_proof.backend_mode=live_vllm` and Qwen critic `ok`. Then verify `/api/readiness` returns `GO`.

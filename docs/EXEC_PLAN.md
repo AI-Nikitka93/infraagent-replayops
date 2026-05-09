@@ -15,6 +15,7 @@ Status legend: `PLANNED`, `IN_PROGRESS`, `DONE`, `BLOCKED`, `CANCELLED`.
 | 9. Upgrade InfraAgent into evidence-first ReplayOps demo | DONE | P-AGENTX + P-FRONTEND | Evidence graph, runtime proof, eval scorecard, War Room packet |
 | 10. Local ReplayOps verification | DONE | QA | pytest, graph smoke, FastAPI TestClient, Playwright UI screenshot |
 | 11. Submission hardening to maximum local package | DONE | Strategy + Full-stack | Runtime truth contract, readiness gate, market pain map, submission copy, demo script, slide outline, MIT license |
-| 12. End-to-end AMD VM rehearsal | PLANNED | Deployment agent | Start vLLM, FastAPI, tunnel, and HF UI against real public URL |
+| 12. Public submission package publication | DONE | Deployment agent | Public GitHub, HF Space, app URL, video artifact, slide artifact, public tunnel smoke |
+| 13. End-to-end AMD VM rehearsal | PLANNED | Deployment agent | Start vLLM, FastAPI, tunnel, and HF UI against live AMD/Qwen runtime |
 
-Current active step: local product and submission package are complete and verified. Next planned step is AMD VM rehearsal with live vLLM/Qwen and Cloudflare Tunnel, followed by public GitHub, HF Space, video, slide deck, and `/api/readiness` GO verification.
+Current active step: public package is complete and verified except for live AMD/Qwen runtime. Next planned step is AMD VM rehearsal with live vLLM/Qwen and Cloudflare Tunnel, followed by `/api/readiness` GO verification.

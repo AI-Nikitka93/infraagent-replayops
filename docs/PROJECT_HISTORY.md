@@ -78,3 +78,12 @@
 Изменены файлы: `tools.py`, `agent.py`, `server.py`, `app.py`, `README.md`, `.gitignore`, `LICENSE`, `SUBMISSION.md`, `DEMO_SCRIPT.md`, `SLIDES.md`, `HACKATHON_READINESS.md`, `docs/market-pain-map.md`, `tests/test_backend_contracts.py`, `tests/test_ui_contracts.py`, `tests/test_submission_package.py`, `docs/STATE.md`, `docs/state.json`, `docs/EXEC_PLAN.md`, `docs/PROJECT_HISTORY.md`
 Результат/доказательство: `pytest -q` -> 16 passed; `python -m compileall agent.py tools.py server.py app.py` -> exit 0; `TestClient /api/readiness` -> `NO_GO_UNTIL_BLOCKERS_CLOSE`; browser check on `127.0.0.1:7862` reached `READY`, `Score: 100/100`, observed `fallback_without_live_vllm`, Business / Ownership Lens, Submission Readiness, and War Room Packet.
 Следующий шаг: На AMD Developer Cloud MI300X получить `live_vllm` и Qwen critic `ok`, опубликовать Public GitHub и HF Space, записать видео, опубликовать слайды, заполнить external URLs и добиться `/api/readiness` -> `GO`.
+
+## Entry
+
+Дата и время: 2026-05-09 04:06 Europe/Minsk
+Роль: Contest deployment / Public package hardening
+Сделано: Создан публичный GitHub repo, опубликован HF Space, добавлены реальные video/slide artifacts, обновлены submission links, поднят актуальный FastAPI и Cloudflare Tunnel, Space secrets указывают на public API.
+Изменены файлы: `README.md`, `SUBMISSION.md`, `HACKATHON_READINESS.md`, `submission_assets/infraagent-replayops-demo.mp4`, `submission_assets/infraagent-replayops-slides.pdf`, generated slide PNGs, `.gitignore`, git repo metadata.
+Результат/доказательство: GitHub `https://github.com/AI-Nikitka93/infraagent-replayops`; HF Space `https://huggingface.co/spaces/clendeningantonettie/infraagent-replayops` reached `RUNNING`; browser smoke on Space reached `READY`, `fallback_without_live_vllm`, and War Room Packet; public API tunnel smoke reached `ready`, score `100/100`, packet `true`; live readiness reports local `7/7`, external `4/5`, blocker `live_vllm`.
+Следующий шаг: На AMD Developer Cloud MI300X запустить vLLM/Qwen, обновить HF Space secret на AMD tunnel URL при необходимости и добиться `/api/readiness` -> `GO`.

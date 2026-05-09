@@ -1,9 +1,9 @@
 {
   "current_goal": "Prepare InfraAgent ReplayOps for a maximum-signal AMD Developer Hackathon submission.",
-  "current_task": "Local product and submission package are hardened; external submission still requires AMD MI300X live proof, public GitHub, HF Space, video, and slides.",
-  "status": "LOCAL_SUBMISSION_PACKAGE_VERIFIED_BLOCKED_ON_EXTERNAL_PROOF",
-  "active_step": "Runtime truth contract, business lens, readiness gate, market pain map, and submission package verified locally",
-  "next_step": "Run on AMD Developer Cloud MI300X, publish public GitHub and HF Space, record video, publish slide deck, set external URLs, then verify /api/readiness returns GO.",
+  "current_task": "Public GitHub, HF Space, video artifact, slide artifact, public tunnel, and public demo smoke are complete; external submission still requires AMD MI300X live Qwen/vLLM proof.",
+  "status": "PUBLIC_SUBMISSION_PACKAGE_VERIFIED_BLOCKED_ON_AMD_LIVE_VLLM",
+  "active_step": "Public package and HF Space are live; readiness is 4/5 external with live_vllm as the only blocker",
+  "next_step": "Run on AMD Developer Cloud MI300X, start vLLM/Qwen, point the same FastAPI/HF Space contract at the AMD tunnel, and verify /api/readiness returns GO with runtime_proof.backend_mode=live_vllm.",
   "blockers": [],
   "artifacts": [
     "docs/research-report.md",
@@ -34,7 +34,9 @@
     "SLIDES.md",
     "HACKATHON_READINESS.md",
     "docs/market-pain-map.md",
-    ".gitignore"
+    ".gitignore",
+    "submission_assets/infraagent-replayops-demo.mp4",
+    "submission_assets/infraagent-replayops-slides.pdf"
   ],
-  "updated_at": "2026-05-09 03:55 Europe/Minsk"
+  "updated_at": "2026-05-09 04:06 Europe/Minsk"
 }
