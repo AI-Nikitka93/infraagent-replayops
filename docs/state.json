@@ -1,9 +1,9 @@
 {
   "current_goal": "Prepare InfraAgent ReplayOps for a maximum-signal AMD Developer Hackathon submission.",
-  "current_task": "Public GitHub, HF Space, video artifact, slide artifact, public tunnel, and public demo smoke are complete; external submission still requires AMD MI300X live Qwen/vLLM proof.",
-  "status": "PUBLIC_SUBMISSION_PACKAGE_VERIFIED_BLOCKED_ON_AMD_LIVE_VLLM",
-  "active_step": "Public package and HF Space are live; readiness is 4/5 external with live_vllm as the only blocker",
-  "next_step": "Run on AMD Developer Cloud MI300X, start vLLM/Qwen, point the same FastAPI/HF Space contract at the AMD tunnel, and verify /api/readiness returns GO with runtime_proof.backend_mode=live_vllm.",
+  "current_task": "Public fallback demo path has been refreshed and verified through a live Cloudflare Tunnel plus HF Space secrets; external submission still requires AMD MI300X live Qwen/vLLM proof.",
+  "status": "PUBLIC_FALLBACK_DEMO_VERIFIED_BLOCKED_ON_AMD_LIVE_VLLM",
+  "active_step": "HF Space reaches READY with score 100/100 through the current tunnel; readiness remains 4/5 external with live_vllm as the only blocker",
+  "next_step": "Obtain or open the AMD Developer Cloud MI300X VM, start vLLM/Qwen, point the same FastAPI/HF Space contract at the AMD tunnel, and verify /api/readiness returns GO with runtime_proof.backend_mode=live_vllm.",
   "blockers": [],
   "artifacts": [
     "docs/research-report.md",
@@ -33,10 +33,11 @@
     "DEMO_SCRIPT.md",
     "SLIDES.md",
     "HACKATHON_READINESS.md",
+    "scripts/refresh_public_demo.py",
     "docs/market-pain-map.md",
     ".gitignore",
     "submission_assets/infraagent-replayops-demo.mp4",
     "submission_assets/infraagent-replayops-slides.pdf"
   ],
-  "updated_at": "2026-05-09 04:06 Europe/Minsk"
+  "updated_at": "2026-05-10 02:29 Europe/Minsk"
 }

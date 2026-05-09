@@ -84,6 +84,14 @@ For Hugging Face Spaces, set these as Space secrets:
 - `INFRAAGENT_API_BASE`
 - `INFRAAGENT_API_KEY`
 
+Refresh the judge-facing public path after starting the local API:
+
+```bash
+python scripts/refresh_public_demo.py --update-hf-space --smoke-space
+```
+
+The script starts a fresh Cloudflare Quick Tunnel, updates the HF Space secrets, verifies the public API, runs the HF Space through its Gradio API, and writes `.runtime/public_demo_status.json`. Quick Tunnel URLs are temporary, so run this before final judging or switch to a named Cloudflare Tunnel with a stable hostname.
+
 ## AMD VM Runtime
 
 Start Qwen2.5-72B on ROCm/vLLM:
@@ -124,6 +132,7 @@ Local package files:
 - Demo app: https://clendeningantonettie-infraagent-replayops.hf.space
 - Video artifact: https://github.com/AI-Nikitka93/infraagent-replayops/raw/main/submission_assets/infraagent-replayops-demo.mp4
 - Slide deck artifact: https://github.com/AI-Nikitka93/infraagent-replayops/raw/main/submission_assets/infraagent-replayops-slides.pdf
+- Current refreshed public API tunnel: https://seattle-rock-south-bath.trycloudflare.com
 
 Readiness endpoint:
 
@@ -144,13 +153,14 @@ pytest -q
 
 Observed:
 
-- `10 passed`.
+- `17 passed`.
 - Graph smoke reached `ready`.
 - Eval score: `100/100`.
 - Evidence records: `9`.
 - Node traces: `5`.
 - War Room Packet generated.
 - Playwright opened the Gradio UI and completed a visible run.
+- HF Space public Gradio API smoke reached `READY`, `Score: 100/100`, and no network error after Space secrets were refreshed.
 
 ## Remaining Rehearsal Step
 

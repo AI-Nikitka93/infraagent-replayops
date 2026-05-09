@@ -31,9 +31,10 @@ Status legend: `PLANNED`, `IN_PROGRESS`, `DONE`, `BLOCKED`, `CANCELLED`.
 24. DONE - Build the thin Hugging Face Spaces UI.
 25. DONE - Wire UI polling to the FastAPI status endpoint with cursor support.
 26. DONE - Test local graph execution without tunnel.
-27. PLANNED - Test Cloudflare Tunnel from external network.
-28. PLANNED - Test Hugging Face Spaces outbound call to the tunnel URL.
-29. PLANNED - Record a stable demo incident script.
-30. PLANNED - Create presentation narrative mapped to judging criteria.
-31. PLANNED - Run end-to-end rehearsal on AMD MI300X with real vLLM/Qwen live.
-32. PLANNED - Freeze demo fixtures and environment variables before submission.
+27. DONE - Test Cloudflare Tunnel from external network.
+28. DONE - Test Hugging Face Spaces outbound call to the refreshed tunnel URL.
+29. DONE - Record a stable demo incident script.
+30. DONE - Create presentation narrative mapped to judging criteria.
+31. BLOCKED - Run end-to-end rehearsal on AMD MI300X with real vLLM/Qwen live; current environment has no AMD Developer Cloud SSH/host/runtime.
+32. DONE - Add reproducible public demo refresh workflow before submission.
+33. PLANNED - Freeze final AMD runtime evidence once `live_vllm` and `Qwen critic: ok` are observed.

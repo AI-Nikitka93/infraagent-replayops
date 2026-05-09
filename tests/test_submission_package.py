@@ -28,3 +28,12 @@ def test_market_research_is_captured_for_judges() -> None:
     research = read_file("docs/market-pain-map.md")
     for text in ["alert fatigue", "tool sprawl", "ownership", "mttr", "agentic observability"]:
         assert text in research.lower()
+
+
+def test_public_demo_refresh_script_exists_and_preserves_secret_boundary() -> None:
+    script = read_file("scripts/refresh_public_demo.py")
+    assert "add_space_secret" in script
+    assert "public_demo_status.json" in script
+    assert "gradio_api/call/run_triage" in script
+    assert "INFRAAGENT_API_KEY" in script
+    assert "print(api_key)" not in script

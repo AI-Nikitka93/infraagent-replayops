@@ -52,9 +52,11 @@ AMD Developer Cloud, AMD ROCm, MI300X, vLLM, Qwen2.5-72B-Instruct, LangGraph, Fa
 - Public GitHub Repository: https://github.com/AI-Nikitka93/infraagent-replayops
 - Hugging Face Space: https://huggingface.co/spaces/clendeningantonettie/infraagent-replayops
 - Demo Application URL: https://clendeningantonettie-infraagent-replayops.hf.space
-- Public API Tunnel: https://insert-execute-membership-dates.trycloudflare.com
+- Public API Tunnel: https://seattle-rock-south-bath.trycloudflare.com
 - Video Presentation: https://github.com/AI-Nikitka93/infraagent-replayops/raw/main/submission_assets/infraagent-replayops-demo.mp4
 - Slide Presentation: https://github.com/AI-Nikitka93/infraagent-replayops/raw/main/submission_assets/infraagent-replayops-slides.pdf
 
 ## Final Proof Still Required
 The public package is ready for submission review, but the winning-tier proof is still incomplete until the AMD Developer Cloud run visibly shows `runtime_proof.backend_mode=live_vllm` and `Qwen critic: ok`.
+
+Latest public fallback smoke: Hugging Face Space reached `READY`, `Score: 100/100`, evidence timeline, runtime truth, and War Room Packet after refreshing `INFRAAGENT_API_BASE` to the current Cloudflare Tunnel. This proves the public demo path works, but it still does not count as live AMD/Qwen proof.

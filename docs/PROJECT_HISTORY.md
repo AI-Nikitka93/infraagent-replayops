@@ -87,3 +87,12 @@
 Изменены файлы: `README.md`, `SUBMISSION.md`, `HACKATHON_READINESS.md`, `submission_assets/infraagent-replayops-demo.mp4`, `submission_assets/infraagent-replayops-slides.pdf`, generated slide PNGs, `.gitignore`, git repo metadata.
 Результат/доказательство: GitHub `https://github.com/AI-Nikitka93/infraagent-replayops`; HF Space `https://huggingface.co/spaces/clendeningantonettie/infraagent-replayops` reached `RUNNING`; browser smoke on Space reached `READY`, `fallback_without_live_vllm`, and War Room Packet; public API tunnel smoke reached `ready`, score `100/100`, packet `true`; live readiness reports local `7/7`, external `4/5`, blocker `live_vllm`.
 Следующий шаг: На AMD Developer Cloud MI300X запустить vLLM/Qwen, обновить HF Space secret на AMD tunnel URL при необходимости и добиться `/api/readiness` -> `GO`.
+
+## Entry
+
+Дата и время: 2026-05-10 02:29 Europe/Minsk
+Роль: Public demo recovery / Judge-path hardening
+Сделано: Воспроизведена текущая публичная поломка HF Space: старый Cloudflare Quick Tunnel `insert-execute-membership-dates.trycloudflare.com` больше не резолвился, из-за чего Gradio API возвращал network error. Поднят и переиспользован рабочий Quick Tunnel `https://seattle-rock-south-bath.trycloudflare.com`, обновлены HF Space secrets `INFRAAGENT_API_BASE` и `INFRAAGENT_API_KEY`, добавлен воспроизводимый скрипт `scripts/refresh_public_demo.py` для будущего refresh + smoke workflow.
+Изменены файлы: `scripts/refresh_public_demo.py`, `tests/test_submission_package.py`, `README.md`, `SUBMISSION.md`, `HACKATHON_READINESS.md`, `EXECUTION_PLAN.md`, `docs/EXEC_PLAN.md`, `docs/STATE.md`, `docs/state.json`, `docs/PROJECT_HISTORY.md`
+Результат/доказательство: локальный API `/health` ok; публичный tunnel `/health` ok; публичный `/api/triage` + `/api/status/{run_id}` -> `ready`, score `100`, runtime `fallback_without_live_vllm`, Qwen critic `skipped`; HF Space public Gradio API -> `READY`, `Score: 100/100`, Submission Readiness visible, no network error. Repo/environment/SSH search did not find usable AMD Developer Cloud host or live MI300X runtime.
+Следующий шаг: Получить доступ к AMD Developer Cloud MI300X, запустить `start_vllm_rocm.sh`, повторить `scripts/refresh_public_demo.py --update-hf-space --smoke-space` from the AMD-backed API, and close the final `live_vllm` blocker only when the public run shows `runtime_proof.backend_mode=live_vllm` and `Qwen critic: ok`.

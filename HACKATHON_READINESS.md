@@ -19,6 +19,7 @@ This file is the strict pre-submission gate. Do not submit until every required 
 - [x] Application URL: https://clendeningantonettie-infraagent-replayops.hf.space
 - [x] Video URL: https://github.com/AI-Nikitka93/infraagent-replayops/raw/main/submission_assets/infraagent-replayops-demo.mp4
 - [x] Slide deck URL: https://github.com/AI-Nikitka93/infraagent-replayops/raw/main/submission_assets/infraagent-replayops-slides.pdf
+- [x] Current public API tunnel smoke: https://seattle-rock-south-bath.trycloudflare.com reached `/health`, `/api/triage`, and HF Space `READY`.
 - [ ] AMD VM proof: `/api/status/{run_id}` shows `runtime_proof.backend_mode=live_vllm`
 - [ ] Qwen proof: root cause panel shows `Qwen critic: ok`
 - [ ] `/api/readiness` returns `verdict=GO`
@@ -37,3 +38,12 @@ This file is the strict pre-submission gate. Do not submit until every required 
 5. Judge reads evidence timeline and owner routing.
 6. Judge opens War Room Packet.
 7. Judge sees README and public GitHub match the demo behavior.
+
+## Refresh Procedure
+Run before final judging if using a Cloudflare Quick Tunnel:
+
+```bash
+python scripts/refresh_public_demo.py --update-hf-space --smoke-space
+```
+
+Quick Tunnel URLs are temporary. A named Cloudflare Tunnel with a stable hostname is preferred for final judging if a Cloudflare-managed domain is available.

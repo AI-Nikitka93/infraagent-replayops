@@ -16,6 +16,7 @@ Status legend: `PLANNED`, `IN_PROGRESS`, `DONE`, `BLOCKED`, `CANCELLED`.
 | 10. Local ReplayOps verification | DONE | QA | pytest, graph smoke, FastAPI TestClient, Playwright UI screenshot |
 | 11. Submission hardening to maximum local package | DONE | Strategy + Full-stack | Runtime truth contract, readiness gate, market pain map, submission copy, demo script, slide outline, MIT license |
 | 12. Public submission package publication | DONE | Deployment agent | Public GitHub, HF Space, app URL, video artifact, slide artifact, public tunnel smoke |
-| 13. End-to-end AMD VM rehearsal | PLANNED | Deployment agent | Start vLLM, FastAPI, tunnel, and HF UI against live AMD/Qwen runtime |
+| 13. End-to-end AMD VM rehearsal | BLOCKED | Deployment agent | No AMD Developer Cloud SSH/host/runtime is present in the current environment; local fallback public demo is refreshed and verified |
+| 14. Stable public demo refresh workflow | DONE | Deployment agent | `scripts/refresh_public_demo.py`, current tunnel, HF Space secrets, public API smoke, HF Space smoke |
 
-Current active step: public package is complete and verified except for live AMD/Qwen runtime. Next planned step is AMD VM rehearsal with live vLLM/Qwen and Cloudflare Tunnel, followed by `/api/readiness` GO verification.
+Current active step: public fallback demo is working through the refreshed Cloudflare Tunnel and HF Space secrets. Winning-tier readiness remains blocked on real AMD Developer Cloud MI300X access, live vLLM/Qwen, and `/api/readiness` returning `GO`.
