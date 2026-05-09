@@ -1,0 +1,24 @@
+.env
+.env.*
+!.env.example
+
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+.runtime/
+.playwright-mcp/
+
+*.log
+*.pid
+
+.venv/
+venv/
+env/
+
+.DS_Store
+Thumbs.db
+
+# Local contest scratch notes, not part of the public submission package.
+Идеи.txt
+Условия.txt

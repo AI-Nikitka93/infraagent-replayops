@@ -1,0 +1,86 @@
+runtime:
+  mode: local-rocm-docker
+  maturity: hackathon-production
+  device_profile: amd-mi300x-192gb
+  public_access: cloudflare-quick-tunnel-to-langgraph
+
+model:
+  provider: huggingface
+  name: Qwen/Qwen2.5-72B-Instruct
+  served_model_name: qwen2.5-72b-instruct
+  dtype: bfloat16
+  max_model_len: 32768
+  context_policy:
+    default_context_tokens: 32768
+    reason: "Matches the conservative profile selected in docs/research-report.md."
+    long_context_profile: disabled-until-validated
+
+vllm:
+  image: vllm/vllm-openai-rocm:v0.20.1
+  container_name: infraagent-vllm-qwen25-72b
+  host: 0.0.0.0
+  port: 8000
+  bind_address: 127.0.0.1
+  base_url: http://127.0.0.1:8000/v1
+  health_url: http://127.0.0.1:8000/v1/models
+  tensor_parallel_size: 1
+  gpu_memory_utilization: 0.90
+  max_num_seqs: 16
+  docker:
+    restart_policy: unless-stopped
+    ipc: host
+    shm_size: 32g
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp=unconfined
+    group_add:
+      - video
+    devices:
+      - /dev/kfd
+      - /dev/dri
+    port_mapping: "127.0.0.1:8000:8000"
+    cache_mount_env: HF_CACHE
+    cache_mount_container_path: /root/.cache/huggingface
+
+langgraph_api:
+  host: 127.0.0.1
+  port: 8010
+  base_url: http://127.0.0.1:8010
+  health_url: http://127.0.0.1:8010/health
+  public_contract:
+    start_run: POST /api/triage
+    poll_run: GET /api/status/{run_id}
+    streaming: disabled
+
+tunnel:
+  provider: cloudflare
+  mode: quick-tunnel
+  target_url: http://localhost:8010
+  expected_public_host_suffix: .trycloudflare.com
+  exposes: langgraph-api-only
+  does_not_expose: vllm-port-8000
+
+health_checks:
+  vllm:
+    timeout_seconds: 2400
+    poll_seconds: 10
+    success_status: 200
+  langgraph_api:
+    timeout_seconds: 120
+    poll_seconds: 2
+    acceptable_http_status_min: 200
+    acceptable_http_status_max: 499
+
+observability:
+  echo_runtime_summary: true
+  log_container_name: infraagent-vllm-qwen25-72b
+  cloudflared_log_file: .runtime/cloudflared-quick-tunnel.log
+
+fallbacks:
+  if_oom:
+    - "Lower VLLM_GPU_MEMORY_UTILIZATION to 0.85."
+    - "Lower VLLM_MAX_NUM_SEQS to 8."
+    - "Temporarily lower VLLM_MAX_MODEL_LEN to 16384 for startup validation."
+  if_quick_tunnel_unstable:
+    - "Move to a named Cloudflare Tunnel with a stable hostname."
