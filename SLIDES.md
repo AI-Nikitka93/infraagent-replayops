@@ -31,8 +31,14 @@ Show READY status, scorecard, node trace, evidence IDs, business / ownership len
 ## Slide 8 - Why It Wins Track 1
 It moves beyond simple RAG: it is a stateful incident workflow with typed tools, traceability, verification, and judge-visible proof.
 
-## Slide 9 - Safety
+## Slide 9 - Why AMD Matters
+MI300X memory and AMD Developer Cloud make local Qwen2.5-72B/vLLM serving realistic for agent critique beside the incident workflow. The runtime proof panel separates `live_vllm` from fallback mode.
+
+## Slide 10 - Safety
 No automatic remediation. Rollback, scaling, routing, and queue actions require human approval.
 
-## Slide 10 - Next Steps
-Replace mock observability fixtures with customer connectors, add persistent run store, and benchmark Qwen/vLLM latency across scenarios.
+## Slide 11 - Limitations
+Mock observability fixtures are deterministic for demo stability. They are not production telemetry. Fallback mode does not count as AMD proof.
+
+## Slide 12 - Next Steps
+Replace mock observability fixtures with customer connectors, add persistent run store, benchmark Qwen/vLLM latency across scenarios, and move from Quick Tunnel to a named Cloudflare Tunnel for judging stability.

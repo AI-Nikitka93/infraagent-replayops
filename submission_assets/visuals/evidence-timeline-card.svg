@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">InfraAgent evidence timeline card</title>
+  <desc id="desc">Operational card showing stable evidence IDs, severity, source group, and concise incident facts.</desc>
+  <rect width="1280" height="720" fill="#F8FAFC"/>
+  <rect x="64" y="56" width="1152" height="608" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="2"/>
+  <text x="96" y="112" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="760" fill="#0F172A">Evidence Timeline</text>
+  <text x="96" y="150" font-family="Inter, Arial, sans-serif" font-size="18" fill="#475569">Stable IDs connect metrics, logs, deploys, traces, and topology to the final packet.</text>
+  <g font-family="JetBrains Mono, Consolas, monospace" font-size="18">
+    <rect x="96" y="204" width="1088" height="76" rx="8" fill="#EEF2F7" stroke="#CBD5E1"/>
+    <circle cx="132" cy="242" r="12" fill="#B91C1C"/>
+    <text x="164" y="236" fill="#0F172A">metric.5xx.001</text>
+    <text x="164" y="262" fill="#475569">CRITICAL metrics - checkout 5xx rose after rc4 deploy</text>
+    <rect x="96" y="308" width="1088" height="76" rx="8" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <circle cx="132" cy="346" r="12" fill="#2563EB"/>
+    <text x="164" y="340" fill="#0F172A">deploy.001</text>
+    <text x="164" y="366" fill="#475569">deploy_events - new_order_writer enabled five minutes before alert</text>
+    <rect x="96" y="412" width="1088" height="76" rx="8" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <circle cx="132" cy="450" r="12" fill="#0F766E"/>
+    <text x="164" y="444" fill="#0F172A">trace.db.001</text>
+    <text x="164" y="470" fill="#475569">traces - slow spans cluster in orders-db lock wait</text>
+    <rect x="96" y="516" width="1088" height="76" rx="8" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <circle cx="132" cy="554" r="12" fill="#A16207"/>
+    <text x="164" y="548" fill="#0F172A">topology.checkout.001</text>
+    <text x="164" y="574" fill="#475569">topology - revenue-critical checkout write path</text>
+  </g>
+</svg>

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 import uuid
 from copy import deepcopy
@@ -13,12 +14,9 @@ from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
 
-from agent import create_initial_state, stream_triage
-
 
 load_dotenv()
 
-PUBLIC_API_KEY = os.getenv("PUBLIC_API_KEY", "CHANGE_ME_PUBLIC_API_KEY")
 HOST = os.getenv("LANGGRAPH_HOST", "127.0.0.1")
 PORT = int(os.getenv("LANGGRAPH_PORT", "8010"))
 
@@ -31,6 +29,8 @@ security = HTTPBearer(auto_error=False)
 RUNS: dict[str, dict[str, Any]] = {}
 RUN_LOCK = asyncio.Lock()
 ROOT = Path(__file__).resolve().parent
+CONTEST_TRUTH_FILE = ROOT / "docs" / "contest_truth.json"
+AGENT_RUNTIME: dict[str, Any] | None = None
 
 
 class TriageRequest(BaseModel):
@@ -57,17 +57,51 @@ def now_iso() -> str:
     return datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
 
 
+def load_contest_truth() -> dict[str, Any]:
+    if not CONTEST_TRUTH_FILE.is_file():
+        return {
+            "checked_at": None,
+            "selected_track": "unknown",
+            "judge_gap_statement": "contest truth snapshot missing",
+            "freshness_sensitive_dependencies": [],
+        }
+    return json.loads(CONTEST_TRUTH_FILE.read_text(encoding="utf-8"))
+
+
+def load_agent_runtime() -> dict[str, Any]:
+    global AGENT_RUNTIME
+    if AGENT_RUNTIME is None:
+        import agent
+
+        AGENT_RUNTIME = {
+            "create_initial_state": agent.create_initial_state,
+            "stream_triage": agent.stream_triage,
+        }
+    return AGENT_RUNTIME
+
+
 async def require_api_key(credentials: HTTPAuthorizationCredentials | None = Depends(security)) -> None:
+    public_api_key = validate_public_api_key()
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authorization header must be: Bearer <PUBLIC_API_KEY>",
         )
-    if credentials.credentials != PUBLIC_API_KEY:
+    if credentials.credentials != public_api_key:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid PUBLIC_API_KEY.",
         )
+
+
+def validate_public_api_key() -> str:
+    value = os.getenv("PUBLIC_API_KEY", "").strip()
+    if not value or value.startswith("CHANGE_ME"):
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="PUBLIC_API_KEY is not configured. Set a generated secret before exposing the API.",
+        )
+    return value
 
 
 def public_state(state: dict[str, Any], cursor: int | None = None) -> dict[str, Any]:
@@ -94,7 +128,7 @@ def public_state(state: dict[str, Any], cursor: int | None = None) -> dict[str, 
         "node_traces": state.get("node_traces", []),
         "runtime_proof": state.get("runtime_proof", {}),
         "business_case": state.get("business_case", {}),
-        "submission_readiness": build_submission_readiness(state.get("runtime_proof", {})),
+        "submission_readiness": build_submission_readiness(state.get("runtime_proof", {}), state.get("root_cause")),
         "root_cause": state.get("root_cause"),
         "runbook": state.get("runbook"),
         "eval_scorecard": state.get("eval_scorecard"),
@@ -111,8 +145,12 @@ def public_state(state: dict[str, Any], cursor: int | None = None) -> dict[str, 
     return response
 
 
-def build_submission_readiness(runtime_proof: dict[str, Any] | None = None) -> dict[str, Any]:
+def build_submission_readiness(runtime_proof: dict[str, Any] | None = None, root_cause: dict[str, Any] | None = None) -> dict[str, Any]:
     runtime_proof = runtime_proof or {}
+    root_cause = root_cause or {}
+    qwen_critic = root_cause.get("qwen_critic") or {}
+    amd_runtime_evidence = runtime_proof.get("amd_runtime_evidence") or {}
+    contest_truth = load_contest_truth()
     file_checks = {
         "license": (ROOT / "LICENSE").is_file(),
         "readme": (ROOT / "README.md").is_file(),
@@ -124,6 +162,8 @@ def build_submission_readiness(runtime_proof: dict[str, Any] | None = None) -> d
     }
     external_checks = {
         "live_vllm": runtime_proof.get("backend_mode") == "live_vllm",
+        "amd_runtime_proof": amd_runtime_evidence.get("ok") is True,
+        "qwen_critic_ok": qwen_critic.get("status") == "ok",
         "hf_space_url": bool(os.getenv("HF_SPACE_URL", "").strip()),
         "public_repo_url": bool(os.getenv("PUBLIC_REPO_URL", "").strip()),
         "demo_video_url": bool(os.getenv("DEMO_VIDEO_URL", "").strip()),
@@ -137,6 +177,12 @@ def build_submission_readiness(runtime_proof: dict[str, Any] | None = None) -> d
     local_passed = sum(1 for passed in file_checks.values() if passed)
     external_passed = sum(1 for passed in external_checks.values() if passed)
     return {
+        "contest_truth": {
+            "checked_at": contest_truth.get("checked_at"),
+            "selected_track": contest_truth.get("selected_track"),
+            "judge_gap_statement": contest_truth.get("judge_gap_statement"),
+            "freshness_sensitive_dependencies": contest_truth.get("freshness_sensitive_dependencies", []),
+        },
         "local_package": {
             "passed": local_passed,
             "total": len(file_checks),
@@ -150,6 +196,14 @@ def build_submission_readiness(runtime_proof: dict[str, Any] | None = None) -> d
         "formal_blockers": formal_blockers,
         "verdict": "GO" if not formal_blockers else "NO_GO_UNTIL_BLOCKERS_CLOSE",
         "truth_note": "Readiness is strict: fallback demo proof does not count as live AMD/Qwen proof.",
+        "live_proof_requirements": [
+            "AMD MI300X runtime device proof exists on the target VM.",
+            "vLLM /v1/models returns the served Qwen model from the AMD VM.",
+            "A public run returns runtime_proof.backend_mode=live_vllm.",
+            "The root cause panel returns Qwen critic: ok.",
+            "The public status payload returns runtime_proof.amd_runtime_evidence.ok=true.",
+            "War Room Packet and readiness evidence are captured with timestamp.",
+        ],
     }
 
 
@@ -159,11 +213,12 @@ async def save_run_state(run_id: str, state: dict[str, Any]) -> None:
 
 
 async def execute_triage(run_id: str, alert: dict[str, Any]) -> None:
-    state = create_initial_state(run_id, alert)
+    runtime = load_agent_runtime()
+    state = runtime["create_initial_state"](run_id, alert)
     state["status"] = "running"
     await save_run_state(run_id, state)
     try:
-        async for update in stream_triage(state, run_id):
+        async for update in runtime["stream_triage"](state, run_id):
             await save_run_state(run_id, update)
     except Exception as exc:
         failed_state = deepcopy(RUNS.get(run_id, state))
@@ -199,7 +254,8 @@ async def submission_readiness() -> dict[str, Any]:
 async def start_triage(request: TriageRequest) -> TriageAccepted:
     run_id = f"run_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
     created_at = now_iso()
-    initial_state = create_initial_state(run_id, request.model_dump())
+    runtime = load_agent_runtime()
+    initial_state = runtime["create_initial_state"](run_id, request.model_dump())
     await save_run_state(run_id, initial_state)
     asyncio.create_task(execute_triage(run_id, request.model_dump()))
     return TriageAccepted(

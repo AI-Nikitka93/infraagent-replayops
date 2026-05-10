@@ -44,6 +44,8 @@ def test_app_surfaces_replayops_panels() -> None:
         "War Room Packet",
         "Business / Ownership Lens",
         "Submission Readiness",
+        "Degraded State",
+        "Proof Glossary",
     ]:
         assert label in source
 
@@ -59,3 +61,36 @@ def test_requirements_ui_are_minimal() -> None:
     source = read_file("requirements-ui.txt")
     assert "gradio" in source
     assert "requests" in source
+
+
+def test_design_md_exists_with_stitch_ready_tokens_and_operational_direction() -> None:
+    source = read_file("DESIGN.md")
+    assert source.startswith("---")
+    for text in [
+        "InfraAgent ReplayOps",
+        "operational war-room",
+        "evidence-first",
+        "colors:",
+        "typography:",
+        "components:",
+        "States and Edge Cases",
+        "Google Stitch",
+        "Lazyweb",
+    ]:
+        assert text in source
+
+
+def test_ui_uses_operational_layout_without_marketing_hero_gradient() -> None:
+    source = read_file("app.py")
+    assert "ops-shell" in source
+    assert "ops-kpi" in source
+    assert "icon-system" in source
+    assert "linear-gradient" not in source
+    assert "hero" not in source
+
+
+def test_ui_scenarios_match_backend_scenario_catalog() -> None:
+    from app import SCENARIOS as UI_SCENARIOS
+    from tools import SCENARIOS as BACKEND_SCENARIOS
+
+    assert set(UI_SCENARIOS) == set(BACKEND_SCENARIOS)

@@ -1,0 +1,75 @@
+{
+  "checked_at": "2026-05-10",
+  "style": {
+    "direction": "operational war-room",
+    "fallback_truth_visible": true,
+    "source": "DESIGN.md",
+    "palette": ["#F8FAFC", "#FFFFFF", "#0F172A", "#2563EB", "#0F766E", "#B91C1C", "#A16207"],
+    "rules": [
+      "No decorative gradients.",
+      "No stock-like hero art.",
+      "Evidence IDs and runtime truth must be readable.",
+      "Fallback mode must remain visible in screenshots and video."
+    ]
+  },
+  "references": [
+    {
+      "name": "Grafana IRM incident timeline",
+      "used_for": "chronological evidence and decision trail pattern",
+      "copied": false
+    },
+    {
+      "name": "Datadog Incident Timeline",
+      "used_for": "timeline cell content separation",
+      "copied": false
+    },
+    {
+      "name": "Grafana AI Observability dashboards",
+      "used_for": "runtime metrics emphasis: latency, TTFT, tools, quality",
+      "copied": false
+    }
+  ],
+  "curation": {
+    "status": "accepted",
+    "rejected_patterns": [
+      "plastic 3D dashboard previews",
+      "unreadable mini text",
+      "decorative gradients",
+      "fake live AMD badges",
+      "brand-copied layouts"
+    ],
+    "checks": [
+      "line weight consistent",
+      "metaphors match product surfaces",
+      "contrast meets UI use",
+      "no generated artifacts or garbled text",
+      "DESIGN.md direction preserved"
+    ]
+  },
+  "assets": [
+    {
+      "path": "submission_assets/visuals/evidence-timeline-card.svg",
+      "role": "README/slides visual reference for evidence timeline",
+      "curation": {
+        "accepted": true,
+        "reason": "Shows cited evidence rows and no fake telemetry source claims."
+      }
+    },
+    {
+      "path": "submission_assets/visuals/runtime-proof-card.svg",
+      "role": "README/slides visual reference for runtime truth",
+      "curation": {
+        "accepted": true,
+        "reason": "Keeps fallback/live split visible and avoids fake AMD proof."
+      }
+    },
+    {
+      "path": "submission_assets/visuals/war-room-packet-card.svg",
+      "role": "README/slides visual reference for final judge artifact",
+      "curation": {
+        "accepted": true,
+        "reason": "Represents packet sections and audit seal without decorative filler."
+      }
+    }
+  ]
+}

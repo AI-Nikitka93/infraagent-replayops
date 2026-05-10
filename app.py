@@ -58,6 +58,14 @@ SCENARIOS: dict[str, dict[str, str]] = {
         "title": "Agent inference latency spike",
         "description": "Agent graph slows down after long-context model requests saturate vLLM.",
     },
+    "insufficient_evidence_unknown_outage": {
+        "label": "Unknown outage with insufficient evidence",
+        "service": "edge-router",
+        "environment": "demo-prod",
+        "severity": "major",
+        "title": "Intermittent customer errors with weak telemetry",
+        "description": "Only a partial edge metric and broad topology are available, so the agent must refuse a premature root cause.",
+    },
 }
 
 DEFAULT_ALERT = (
@@ -67,14 +75,41 @@ DEFAULT_ALERT = (
 
 CSS = """
 .gradio-container { max-width: 1280px !important; }
-.hero {
-  border: 1px solid #d8dee9;
+.ops-shell {
+  border: 1px solid #cbd5e1;
   border-radius: 8px;
   padding: 18px 20px;
-  background: linear-gradient(135deg, #f8fafc 0%, #eef6ff 100%);
+  background: #f8fafc;
 }
-.hero h1 { margin: 0 0 8px 0; }
+.ops-shell h1 { margin: 0 0 8px 0; font-size: 26px; line-height: 1.2; }
 .muted { color: #475569; }
+.ops-command {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+.ops-kpi {
+  border: 1px solid #dbe3ee;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #ffffff;
+  min-height: 82px;
+}
+.ops-kpi strong { display: block; color: #0f172a; margin-bottom: 4px; }
+.icon-system {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid #94a3b8;
+  border-radius: 6px;
+  margin-right: 6px;
+  color: #0f172a;
+  font-size: 13px;
+}
+.panel-tight textarea, .panel-tight .wrap { font-size: 13px; }
 .status-pill {
   display: inline-flex;
   align-items: center;
@@ -108,21 +143,9 @@ CSS = """
   background: #f1f5f9;
   border-color: #cbd5e1;
 }
-.metric-row {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-}
-.metric {
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 10px 12px;
-  background: #ffffff;
-}
-.metric strong { display: block; color: #0f172a; }
 @media (max-width: 760px) {
-  .hero { padding: 16px; }
-  .metric-row { grid-template-columns: 1fr; }
+  .ops-shell { padding: 16px; }
+  .ops-command { grid-template-columns: 1fr; }
 }
 """
 
@@ -226,6 +249,40 @@ def format_readiness(readiness: dict[str, Any] | None) -> str:
     ]
     lines.extend([f"- `{item}`" for item in blockers] or ["- none"])
     return "\n".join(lines)
+
+
+def format_degraded_state(status_payload: dict[str, Any] | None) -> str:
+    if not status_payload:
+        return "Degraded State will show Qwen, tunnel, run, evidence, and readiness blockers after polling starts."
+    runtime = status_payload.get("runtime_proof") or {}
+    readiness = status_payload.get("submission_readiness") or {}
+    scorecard = status_payload.get("eval_scorecard") or {}
+    status_value = status_payload.get("status", "unknown")
+    blockers = readiness.get("formal_blockers") or []
+    evidence_missing = (scorecard.get("checks") or {}).get("expected_evidence_missing") or []
+    notes = [
+        f"**Run state:** `{status_value}`",
+        f"**Qwen/vLLM:** `{runtime.get('backend_mode', 'not checked')}`",
+        f"**Tunnel/API:** `reachable` once this panel is polling; failed requests render as network errors.",
+        f"**Evidence gate:** `{scorecard.get('grade', 'pending')}`",
+        "**Readiness blockers:** " + (", ".join(f"`{item}`" for item in blockers) if blockers else "none returned"),
+    ]
+    if runtime.get("backend_mode") != "live_vllm":
+        notes.append("**No live Qwen:** graph remains usable, but the Qwen critic is skipped and runtime truth stays degraded.")
+    if status_value == "needs_human_review" or evidence_missing:
+        missing = ", ".join(f"`{item}`" for item in evidence_missing) if evidence_missing else "evidence did not pass the automated gate"
+        notes.append(f"**Evidence insufficient:** {missing}. Human review remains required.")
+    return "\n\n".join(notes)
+
+
+def format_glossary() -> str:
+    return "\n".join([
+        "- **Evidence ID:** stable citation key for each metric, log, deploy event, trace, or topology record.",
+        "- **Runtime proof:** backend health, model identity, latency, and AMD/vLLM truth captured by the API.",
+        "- **Scorecard:** deterministic checks for evidence coverage, citation coverage, root-cause fit, and runbook completeness.",
+        "- **Owner/Risk:** practical handoff target and business consequence for the incident commander.",
+        "- **Packet:** final War Room Packet with audit seal, rejected alternatives, limitations, and safety notes.",
+    ])
 
 
 def format_scorecard(scorecard: dict[str, Any] | None) -> str:
@@ -348,6 +405,8 @@ def output_tuple(
     scorecard_md: str,
     business_md: str,
     readiness_md: str,
+    degraded_md: str,
+    glossary_md: str,
     trace_md: str,
     evidence_md: str,
     root_md: str,
@@ -355,7 +414,7 @@ def output_tuple(
     packet: str,
     incident_json: Any,
     events_md: str,
-) -> tuple[str, str, str, str, str, str, str, str, str, str, str, Any, str]:
+) -> tuple[str, str, str, str, str, str, str, str, str, str, str, str, str, Any, str]:
     return (
         status_html,
         node_md,
@@ -363,6 +422,8 @@ def output_tuple(
         scorecard_md,
         business_md,
         readiness_md,
+        degraded_md,
+        glossary_md,
         trace_md,
         evidence_md,
         root_md,
@@ -373,7 +434,7 @@ def output_tuple(
     )
 
 
-def config_error() -> tuple[str, str, str, str, str, str, str, str, str, Any, str]:
+def config_error() -> tuple[str, str, str, str, str, str, str, str, str, str, str, str, str, Any, str]:
     message = "Missing HF Space secrets. Set `INFRAAGENT_API_BASE` and `INFRAAGENT_API_KEY`."
     return output_tuple(
         status_badge("error", "configuration"),
@@ -382,6 +443,8 @@ def config_error() -> tuple[str, str, str, str, str, str, str, str, str, Any, st
         "Evaluation unavailable.",
         "Business lens unavailable.",
         "Submission readiness unavailable.",
+        "Degraded State: missing `INFRAAGENT_API_BASE` or `INFRAAGENT_API_KEY`.",
+        format_glossary(),
         "Trace unavailable.",
         "Evidence unavailable.",
         "Root cause unavailable.",
@@ -392,7 +455,7 @@ def config_error() -> tuple[str, str, str, str, str, str, str, str, str, Any, st
     )
 
 
-def request_error(message: str, run_id: str | None = None) -> tuple[str, str, str, str, str, str, str, str, str, Any, str]:
+def request_error(message: str, run_id: str | None = None) -> tuple[str, str, str, str, str, str, str, str, str, str, str, str, str, Any, str]:
     return output_tuple(
         status_badge("error", "network", run_id),
         f"Network or API error: {message}",
@@ -400,6 +463,8 @@ def request_error(message: str, run_id: str | None = None) -> tuple[str, str, st
         "Evaluation unavailable.",
         "Business lens unavailable.",
         "Submission readiness unavailable.",
+        "Degraded State: public API request failed; verify tunnel URL, backend process, and bearer token.",
+        format_glossary(),
         "Trace unavailable.",
         "Evidence unavailable.",
         "Root cause unavailable.",
@@ -489,6 +554,8 @@ def run_triage(alert_text: str, scenario_id: str):
         "Evaluation pending.",
         "Business lens pending.",
         "Submission readiness pending.",
+        "Degraded State pending.",
+        format_glossary(),
         "Trace pending.",
         "Evidence pending.",
         "Root cause pending.",
@@ -520,6 +587,8 @@ def run_triage(alert_text: str, scenario_id: str):
             format_scorecard(status_payload.get("eval_scorecard")),
             format_business_case(status_payload.get("business_case")),
             format_readiness(status_payload.get("submission_readiness")),
+            format_degraded_state(status_payload),
+            format_glossary(),
             format_trace(status_payload.get("node_traces")),
             format_evidence(status_payload.get("evidence_items")),
             format_root_cause(status_payload.get("root_cause")),
@@ -543,6 +612,8 @@ def run_triage(alert_text: str, scenario_id: str):
         format_scorecard(final_payload.get("eval_scorecard") if final_payload else None),
         format_business_case(final_payload.get("business_case") if final_payload else None),
         format_readiness(final_payload.get("submission_readiness") if final_payload else None),
+        format_degraded_state(final_payload),
+        format_glossary(),
         format_trace(final_payload.get("node_traces") if final_payload else None),
         format_evidence(final_payload.get("evidence_items") if final_payload else None),
         format_root_cause(final_payload.get("root_cause") if final_payload else None),
@@ -558,16 +629,16 @@ def build_app() -> gr.Blocks:
     with gr.Blocks(title="InfraAgent ReplayOps") as demo:
         gr.HTML(
             """
-            <section class="hero">
+            <section class="ops-shell">
               <h1>InfraAgent ReplayOps: Evidence-Verified Incident Triage</h1>
               <p class="muted">
-                Thin Hugging Face Spaces command surface for a LangGraph backend with a strict runtime truth contract for Qwen on AMD MI300X.
+                Thin Hugging Face Spaces command surface for an incident agent: what happened, what the graph does, which evidence it cites, and whether AMD/Qwen runtime proof is live.
               </p>
-              <div class="metric-row">
-                <div class="metric"><strong>Agent workflow</strong><span class="muted">Alert -> Evidence -> Cause -> Runbook -> Eval</span></div>
-                <div class="metric"><strong>Runtime proof</strong><span class="muted">vLLM health, model ID, request latency</span></div>
-                <div class="metric"><strong>Judge artifact</strong><span class="muted">War Room Packet with audit seal</span></div>
-                <div class="metric"><strong>Transport</strong><span class="muted">HTTP polling via public tunnel</span></div>
+              <div class="ops-command">
+                <div class="ops-kpi"><strong><span class="icon-system">!</span>Status</strong><span class="muted">Incident state, active node, and run ID.</span></div>
+                <div class="ops-kpi"><strong><span class="icon-system">E</span>Evidence</strong><span class="muted">Stable IDs cited in root cause and packet.</span></div>
+                <div class="ops-kpi"><strong><span class="icon-system">A</span>AMD proof</strong><span class="muted">vLLM health, model ID, latency, runtime truth.</span></div>
+                <div class="ops-kpi"><strong><span class="icon-system">P</span>Packet</strong><span class="muted">War Room Packet with score and audit seal.</span></div>
               </div>
             </section>
             """
@@ -598,6 +669,10 @@ def build_app() -> gr.Blocks:
             scorecard_output = gr.Markdown(label="Eval Scorecard", value="Evaluation scorecard will appear after verification.")
             business_output = gr.Markdown(label="Business / Ownership Lens", value="Business / Ownership Lens will appear after verification.")
             readiness_output = gr.Markdown(label="Submission Readiness", value="Submission Readiness gate will appear after backend verification.")
+            degraded_output = gr.Markdown(label="Degraded State", value="Degraded State will show runtime, tunnel, run, evidence, and readiness blockers.")
+
+        with gr.Row():
+            glossary_output = gr.Markdown(label="Proof Glossary", value=format_glossary())
             trace_output = gr.Markdown(label="Live Agent Trace", value="Agent trace will appear as nodes complete.")
 
         with gr.Row():
@@ -628,6 +703,8 @@ def build_app() -> gr.Blocks:
                 scorecard_output,
                 business_output,
                 readiness_output,
+                degraded_output,
+                glossary_output,
                 trace_output,
                 evidence_output,
                 root_output,

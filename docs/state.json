@@ -1,10 +1,15 @@
 {
   "current_goal": "Prepare InfraAgent ReplayOps for a maximum-signal AMD Developer Hackathon submission.",
-  "current_task": "Public fallback demo path has been refreshed and verified through a live Cloudflare Tunnel plus HF Space secrets; external submission still requires AMD MI300X live Qwen/vLLM proof.",
-  "status": "PUBLIC_FALLBACK_DEMO_VERIFIED_BLOCKED_ON_AMD_LIVE_VLLM",
-  "active_step": "HF Space reaches READY with score 100/100 through the current tunnel; readiness remains 4/5 external with live_vllm as the only blocker",
-  "next_step": "Obtain or open the AMD Developer Cloud MI300X VM, start vLLM/Qwen, point the same FastAPI/HF Space contract at the AMD tunnel, and verify /api/readiness returns GO with runtime_proof.backend_mode=live_vllm.",
-  "blockers": [],
+  "current_task": "Strict final submission gate added: live_vllm now requires AMD device proof, readiness requires Qwen critic ok, and scripts/final_submission_gate.py blocks final submission until all proof is observed.",
+  "status": "STRICT_FINAL_GATE_READY_AMD_LIVE_PROOF_BLOCKED",
+  "active_step": "Local package is hardened for honest submission gating; final GO_SUBMIT remains blocked until public AMD MI300X/vLLM/Qwen proof is captured.",
+  "next_step": "Run the final gate from an AMD Developer Cloud MI300X session after start_vllm_rocm.sh and public tunnel refresh: python scripts/final_submission_gate.py --api-base \"$INFRAAGENT_API_BASE\" --api-key-file .runtime/local_api_key.txt --space-host https://clendeningantonettie-infraagent-replayops.hf.space.",
+  "blockers": [
+    "live_vllm",
+    "amd_runtime_proof",
+    "qwen_critic_ok",
+    "public_readiness_go"
+  ],
   "artifacts": [
     "docs/research-report.md",
     "docs/architecture.md",
@@ -34,10 +39,23 @@
     "SLIDES.md",
     "HACKATHON_READINESS.md",
     "scripts/refresh_public_demo.py",
+    "scripts/amd_runtime_rehearsal.py",
+    "scripts/public_smoke.py",
+    "scripts/security_privacy_audit.py",
+    "scripts/claim_audit.py",
+    "scripts/visual_asset_audit.py",
+    "scripts/final_submission_gate.py",
+    "DESIGN.md",
+    "docs/JUDGE_FAQ.md",
+    "docs/BUILD_IN_PUBLIC.md",
+    "docs/RECOVERY_CHECKLIST.md",
+    "docs/JUDGING_DAY_RUNBOOK.md",
+    "submission_assets/visual_assets_manifest.json",
+    "docs/contest_truth.json",
     "docs/market-pain-map.md",
     ".gitignore",
     "submission_assets/infraagent-replayops-demo.mp4",
     "submission_assets/infraagent-replayops-slides.pdf"
   ],
-  "updated_at": "2026-05-10 02:29 Europe/Minsk"
+  "updated_at": "2026-05-10 04:21 Europe/Minsk"
 }

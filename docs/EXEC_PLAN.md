@@ -18,5 +18,9 @@ Status legend: `PLANNED`, `IN_PROGRESS`, `DONE`, `BLOCKED`, `CANCELLED`.
 | 12. Public submission package publication | DONE | Deployment agent | Public GitHub, HF Space, app URL, video artifact, slide artifact, public tunnel smoke |
 | 13. End-to-end AMD VM rehearsal | BLOCKED | Deployment agent | No AMD Developer Cloud SSH/host/runtime is present in the current environment; local fallback public demo is refreshed and verified |
 | 14. Stable public demo refresh workflow | DONE | Deployment agent | `scripts/refresh_public_demo.py`, current tunnel, HF Space secrets, public API smoke, HF Space smoke |
+| 15. Contest truth and AMD proof hardening | DONE | QA / Full-stack | `docs/contest_truth.json`, `/api/readiness` contest truth, `scripts/amd_runtime_rehearsal.py`, T001-T040 local closure without fake live proof |
+| 16. ReplayOps product core and design hardening | DONE | QA / Full-stack | Six-scenario catalog, negative human-review path, stronger packet contract, operational UI, `DESIGN.md`, browser smoke |
+| 17. Submission QA, public smoke, and recovery runbooks | DONE | QA / Full-stack | Curated visual assets, judge FAQ, Build in Public notes, claim/security audits, public smoke script, recovery and judging-day runbooks |
+| 18. Strict final submission gate | DONE | QA / Full-stack | `live_vllm` requires AMD device proof, readiness requires `Qwen critic: ok`, and `scripts/final_submission_gate.py` returns `GO_SUBMIT` only when tests, audits, AMD proof, public smoke, and readiness all pass |
 
-Current active step: public fallback demo is working through the refreshed Cloudflare Tunnel and HF Space secrets. Winning-tier readiness remains blocked on real AMD Developer Cloud MI300X access, live vLLM/Qwen, and `/api/readiness` returning `GO`.
+Current active step: local package and final submit gate are hardened. Winning-tier readiness remains blocked on real AMD Developer Cloud MI300X access, AMD device proof, live vLLM/Qwen, `Qwen critic: ok`, final AMD screenshot/status/readiness artifact, and `/api/readiness` returning `GO`.

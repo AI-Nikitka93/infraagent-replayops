@@ -45,3 +45,12 @@ The final video must visibly show:
 - Qwen critic status `ok`;
 - War Room Packet generated;
 - `/api/readiness` with no formal blockers.
+
+## Fallback Recording Rule
+If live AMD proof is unavailable, record only a fallback demo and say the limitation on screen: "Fallback demo verified; live AMD/Qwen proof pending." Do not use that recording as the final winning-tier video for T096.
+
+## Visual QA Before Recording
+- Runtime truth panel must be visible.
+- War Room Packet must include the audit seal.
+- No screenshot or video crop may hide `fallback_without_live_vllm` when fallback mode is active.
+- No production telemetry claim may appear over deterministic fixtures.

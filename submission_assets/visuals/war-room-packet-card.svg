@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">InfraAgent War Room Packet card</title>
+  <desc id="desc">Operational card showing the final auditable incident handoff sections.</desc>
+  <rect width="1280" height="720" fill="#F8FAFC"/>
+  <rect x="64" y="56" width="1152" height="608" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="2"/>
+  <text x="96" y="112" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="760" fill="#0F172A">War Room Packet</text>
+  <text x="96" y="150" font-family="Inter, Arial, sans-serif" font-size="18" fill="#475569">A copyable handoff: cause, evidence, runbook, limitations, glossary, and audit seal.</text>
+  <g font-family="Inter, Arial, sans-serif" font-size="22">
+    <rect x="96" y="206" width="320" height="96" rx="8" fill="#EEF2F7" stroke="#CBD5E1"/>
+    <text x="124" y="264" fill="#0F172A">Summary</text>
+    <rect x="480" y="206" width="320" height="96" rx="8" fill="#EEF2F7" stroke="#CBD5E1"/>
+    <text x="508" y="264" fill="#0F172A">Evidence IDs</text>
+    <rect x="864" y="206" width="320" height="96" rx="8" fill="#EEF2F7" stroke="#CBD5E1"/>
+    <text x="892" y="264" fill="#0F172A">Rejected Alternatives</text>
+    <rect x="96" y="350" width="320" height="96" rx="8" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <text x="124" y="408" fill="#0F172A">Human-Approved Runbook</text>
+    <rect x="480" y="350" width="320" height="96" rx="8" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <text x="508" y="408" fill="#0F172A">Runtime Truth</text>
+    <rect x="864" y="350" width="320" height="96" rx="8" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <text x="892" y="408" fill="#0F172A">Scorecard</text>
+    <rect x="96" y="508" width="1088" height="74" rx="8" fill="#0F172A"/>
+    <text x="124" y="554" font-family="JetBrains Mono, Consolas, monospace" font-size="20" fill="#FFFFFF">Audit seal: sha256(run + evidence + score)</text>
+  </g>
+</svg>

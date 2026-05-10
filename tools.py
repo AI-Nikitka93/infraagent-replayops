@@ -61,6 +61,16 @@ PAIN_PROFILES: dict[str, dict[str, Any]] = {
         "business_risk": "Every Qwen-backed agent workflow slows when inference queues saturate.",
         "manual_triage_baseline_minutes": 22,
     },
+    "unknown_low_evidence": {
+        "pain_profile": [
+            "weak signal triage",
+            "missing telemetry windows",
+            "premature root cause pressure",
+        ],
+        "ownership_hint": "Route to the incident commander and platform observability owner until service ownership is confirmed.",
+        "business_risk": "Customer-facing instability may spread while the team lacks enough evidence to choose a safe remediation.",
+        "manual_triage_baseline_minutes": 40,
+    },
 }
 
 
@@ -468,6 +478,100 @@ SCENARIOS: dict[str, dict[str, Any]] = {
             }
         ],
     },
+    "insufficient_evidence_unknown_outage": {
+        "label": "Unknown outage with insufficient evidence",
+        "service": "edge-router",
+        "environment": "demo-prod",
+        "incident_type": "unknown_low_evidence",
+        "business_impact": "Intermittent customer errors are reported, but telemetry is too thin for automated root-cause selection.",
+        "expected_root_cause": "No automated root cause should be selected until metrics, logs, traces, deploy events, and topology agree.",
+        "expected_evidence_ids": ["metric.edge.error.001", "log.edge.sample.001", "trace.edge.missing.001", "deploy.edge.unknown.001"],
+        "expected_runbook_keywords": ["human review", "wider evidence", "owner", "do not rollback", "telemetry"],
+        "metrics": [
+            {
+                "evidence_id": "metric.edge.partial.001",
+                "metric": "http_5xx_rate",
+                "baseline": "0.5%",
+                "observed": "1.8%",
+                "window": "5m",
+                "severity_hint": "warning",
+                "summary": "A short 5xx increase is visible, but the sample window is too small to isolate a service.",
+                "supports": "unknown_low_evidence",
+            }
+        ],
+        "logs": [],
+        "deploy_events": [],
+        "traces": [],
+        "topology": [
+            {
+                "evidence_id": "topology.edge.partial.001",
+                "service": "edge-router",
+                "dependencies": ["checkout-api", "payment-api", "inventory-api"],
+                "blast_radius": ["checkout-web", "product-page"],
+                "summary": "The edge router fans into multiple services, so ownership cannot be inferred from topology alone.",
+                "severity_hint": "warning",
+                "supports": "impact_assessment",
+            }
+        ],
+    },
+}
+
+
+SCENARIO_STORIES: dict[str, dict[str, Any]] = {
+    "checkout_deploy_regression": {
+        "symptom": "Checkout writes return elevated 5xx responses and p95 latency spikes minutes after release rc4.",
+        "service_owner": "checkout-api owner plus release manager",
+        "evidence_trail": "Deploy event, 5xx metric, database timeout metric, timeout log, and slow DB trace all converge on the checkout write path.",
+        "recovery_summary": "Rollback rc4 or disable new_order_writer, then validate 5xx, p95 latency, and DB timeout recovery.",
+        "communication_targets": ["checkout-api owner", "release manager", "support lead", "incident commander"],
+        "post_recovery_checks": ["5xx below 1 percent", "p95 latency near baseline", "database timeout log count flat"],
+        "fixture_truth_note": "Deterministic demo fixture based on a realistic deploy-regression pattern; it is not live production telemetry.",
+    },
+    "payments_dependency_slowdown": {
+        "symptom": "Payment authorization latency rises while payment-api CPU and memory remain normal.",
+        "service_owner": "payment-api owner plus payment operations",
+        "evidence_trail": "Service latency, external gateway latency, gateway warning logs, and trace slow spans point outside payment-api.",
+        "recovery_summary": "Use degraded gateway mode or fallback provider, then validate authorization latency and error-rate recovery.",
+        "communication_targets": ["payment-api owner", "payment operations", "support lead", "provider contact"],
+        "post_recovery_checks": ["gateway p95 below 500ms", "authorization error rate below 2 percent", "fallback path reviewed"],
+        "fixture_truth_note": "Deterministic demo fixture for downstream-provider slowdown; provider names and events are synthetic.",
+    },
+    "inventory_memory_leak": {
+        "symptom": "Inventory lookups intermittently fail after memory climbs and containers restart.",
+        "service_owner": "inventory-api owner plus platform runtime owner",
+        "evidence_trail": "Memory working-set metric, restart metric, OOM log, cache-hydrate traces, and cache-prewarm release align.",
+        "recovery_summary": "Stabilize replicas, scale capacity, rollback cache prewarm if growth repeats, then validate memory and restarts.",
+        "communication_targets": ["inventory-api owner", "platform runtime owner", "commerce operations"],
+        "post_recovery_checks": ["working set below 70 percent", "restart count flat", "lookup error rate normal"],
+        "fixture_truth_note": "Deterministic demo fixture for resource exhaustion; no real customer inventory data is embedded.",
+    },
+    "queue_backlog_worker_stall": {
+        "symptom": "Order queue backlog grows while worker success rate falls and confirmations are delayed.",
+        "service_owner": "order-worker owner plus fulfillment operations",
+        "evidence_trail": "Queue-depth metric, worker-success metric, poison-message log, and consumer trace show a bad message cohort.",
+        "recovery_summary": "Isolate poison messages, restart consumers, raise concurrency only if dependencies remain healthy, then drain the queue.",
+        "communication_targets": ["order-worker owner", "fulfillment operations", "customer support"],
+        "post_recovery_checks": ["visible messages decreasing", "worker success above 98 percent", "dead-letter replay plan approved"],
+        "fixture_truth_note": "Deterministic demo fixture for queue backlog and poison-message triage; message data is synthetic.",
+    },
+    "vllm_saturation": {
+        "symptom": "Agent runs slow down after long-context prompts increase vLLM queue depth and time to first token.",
+        "service_owner": "AI platform owner plus AMD/vLLM runtime operator",
+        "evidence_trail": "vLLM waiting-request metric, TTFT metric, scheduler log, model config event, and prefill trace converge on inference saturation.",
+        "recovery_summary": "Cap long-context concurrency, reduce context pressure, protect interactive traffic, then validate vLLM queue and TTFT recovery.",
+        "communication_targets": ["AI platform owner", "runtime operator", "incident commander", "demo judge"],
+        "post_recovery_checks": ["waiting requests near zero", "TTFT near baseline", "load simulation stable"],
+        "fixture_truth_note": "Deterministic demo fixture for AMD/vLLM model-serving saturation; live AMD proof is checked separately.",
+    },
+    "insufficient_evidence_unknown_outage": {
+        "symptom": "Customers report intermittent errors, but available telemetry contains only a weak metric sample and broad topology.",
+        "service_owner": "incident commander until a service owner is confirmed",
+        "evidence_trail": "Partial edge metric and broad topology are intentionally insufficient; logs, traces, and deploy correlation are missing.",
+        "recovery_summary": "Hold automated remediation, widen telemetry, confirm ownership, and keep the case in human review.",
+        "communication_targets": ["incident commander", "platform observability owner", "support lead"],
+        "post_recovery_checks": ["full telemetry window collected", "owner confirmed", "root cause selected only after evidence agrees"],
+        "fixture_truth_note": "Negative deterministic fixture proving the system refuses a premature root-cause claim.",
+    },
 }
 
 
@@ -486,6 +590,7 @@ def available_scenarios() -> list[dict[str, str]]:
 def scenario_metadata(scenario_id: str | None) -> dict[str, Any]:
     scenario = _scenario_payload(scenario_id)
     pain = PAIN_PROFILES.get(scenario["incident_type"], PAIN_PROFILES["deploy_regression"])
+    story = SCENARIO_STORIES.get(scenario_id or DEFAULT_SCENARIO, SCENARIO_STORIES[DEFAULT_SCENARIO])
     return {
         "scenario_id": scenario_id or DEFAULT_SCENARIO,
         "label": scenario["label"],
@@ -500,6 +605,13 @@ def scenario_metadata(scenario_id: str | None) -> dict[str, Any]:
         "expected_root_cause": scenario["expected_root_cause"],
         "expected_evidence_ids": scenario["expected_evidence_ids"],
         "expected_runbook_keywords": scenario["expected_runbook_keywords"],
+        "symptom": story["symptom"],
+        "service_owner": story["service_owner"],
+        "evidence_trail": story["evidence_trail"],
+        "recovery_summary": story["recovery_summary"],
+        "communication_targets": story["communication_targets"],
+        "post_recovery_checks": story["post_recovery_checks"],
+        "fixture_truth_note": story["fixture_truth_note"],
     }
 
 

@@ -1,0 +1,186 @@
+{
+  "checked_at": "2026-05-10",
+  "timezone": "Europe/Minsk",
+  "sources": [
+    {
+      "name": "AMD technical article",
+      "url": "https://www.amd.com/en/developer/resources/technical-articles/2026/build-across-the-ai-stack--join-the-amd-x-lablab-ai-hackathon-.html",
+      "facts": [
+        "Event runs May 4-10, 2026.",
+        "The hackathon emphasizes systems/performance, models/training, applications/UX, and agentic workflows/autonomy.",
+        "Prize signals include a USD 20000 cash pool in the AMD article, plus Radeon GPU, AMD Developer Cloud credits, workshops, mentors, and finalist visibility."
+      ]
+    },
+    {
+      "name": "Lablab AMD Developer Hackathon page",
+      "url": "https://lablab.ai/ai-hackathons/amd-developer",
+      "facts": [
+        "Track 1: AI Agents & Agentic Workflows.",
+        "Track 2: Fine-Tuning on AMD GPUs.",
+        "Track 3: Multimodal AI Applications.",
+        "Extra Challenge: Ship It + Build in Public.",
+        "Submission fields include project title, short description, long description, tags, cover image, video, slide deck, GitHub repository, demo platform, and application URL.",
+        "The Lablab page lists USD 21500+ total prize pool, Track 1/2/3 prizes, Hugging Face special prize, and judging criteria: Application of Technology, Presentation, Business Value, and Originality."
+      ]
+    },
+    {
+      "name": "ROCm MI300X performance guides",
+      "url": "https://rocmdocs.amd.com/en/develop/how-to/gpu-performance/mi300x.html",
+      "facts": [
+        "ROCm publishes MI300X system, workload, and vLLM inference guidance.",
+        "vLLM inference has a preconfigured environment for testing popular models on AMD Instinct MI300X GPUs."
+      ]
+    },
+    {
+      "name": "Cloudflare Quick Tunnels docs",
+      "url": "https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/do-more-with-tunnels/trycloudflare/",
+      "facts": [
+        "Quick Tunnels are intended for testing and development only.",
+        "Cloudflare recommends a remotely managed tunnel for production use.",
+        "Quick Tunnels have no SLA/uptime guarantee, a 200 in-flight request limit, and no SSE support."
+      ]
+    },
+    {
+      "name": "Hugging Face Spaces API endpoint docs",
+      "url": "https://huggingface.co/docs/hub/en/spaces-api-endpoints",
+      "facts": [
+        "Every Gradio Space is automatically available as an API endpoint.",
+        "The Space exposes OpenAPI under /gradio_api/openapi.json."
+      ]
+    }
+  ],
+  "selected_track": "Track 1: AI Agents & Agentic Workflows",
+  "rejected_tracks": [
+    {
+      "track": "Track 2: Fine-Tuning on AMD GPUs",
+      "reason": "InfraAgent serves Qwen through vLLM and does not fine-tune model weights."
+    },
+    {
+      "track": "Track 3: Multimodal AI Applications",
+      "reason": "The product is an incident-triage workflow, not an image/audio/video multimodal application."
+    }
+  ],
+  "judging_criteria": [
+    "Application of Technology",
+    "Presentation",
+    "Business Value",
+    "Originality"
+  ],
+  "criteria_mapping": [
+    {
+      "criterion": "Application of Technology",
+      "current_project_evidence": "FastAPI polling API, five-node LangGraph, deterministic observability tools, runtime truth contract, vLLM/Qwen integration path, and AMD proof harness.",
+      "remaining_gap": "Public run must show live_vllm from AMD MI300X."
+    },
+    {
+      "criterion": "Presentation",
+      "current_project_evidence": "HF Space surfaces status, scorecard, runtime proof, evidence timeline, root cause, runbook, and War Room Packet.",
+      "remaining_gap": "Final video and slides must be refreshed after live AMD proof."
+    },
+    {
+      "criterion": "Business Value",
+      "current_project_evidence": "Business / Ownership Lens maps alert fatigue, tool sprawl, ownership, MTTR, and governance into each run.",
+      "remaining_gap": "No blocker beyond honest live-runtime proof."
+    },
+    {
+      "criterion": "Originality",
+      "current_project_evidence": "Replayable incident packet with stable evidence IDs, rejected alternatives, runtime truth, and audit seal instead of a generic incident chatbot.",
+      "remaining_gap": "Competitive counterargument must stay focused on proof depth, not platform breadth."
+    }
+  ],
+  "submission_fields": [
+    "project_title",
+    "short_description",
+    "long_description",
+    "tags",
+    "cover_image",
+    "video_presentation",
+    "slide_deck",
+    "github_repository",
+    "demo_platform",
+    "application_url"
+  ],
+  "required_submission_scope": [
+    "Public GitHub repository",
+    "Public Hugging Face Space",
+    "Demo application URL",
+    "Video presentation",
+    "Slide deck",
+    "Runtime truth visible in the run",
+    "Readiness endpoint",
+    "War Room Packet"
+  ],
+  "prize_scope_signals": [
+    "Build in Public",
+    "Sponsor feedback about AMD Developer Cloud, ROCm, vLLM, Qwen, and tunnel friction",
+    "Judge-visible AMD MI300X/Qwen runtime proof"
+  ],
+  "main_release_blocker": "live_vllm",
+  "judge_gap_statement": "fallback demo verified, live AMD/Qwen proof pending",
+  "one_minute_judging_thesis": "InfraAgent ReplayOps turns a noisy infrastructure alert into a judge-verifiable War Room Packet. A bounded LangGraph workflow gathers evidence, cites stable IDs, rejects weak hypotheses, routes ownership, produces a human-approved runbook, scores itself, and exposes runtime truth. AMD MI300X unlocks local Qwen/vLLM critique so judges can see whether the agent used live model proof or honest fallback. The result is not another dashboard or RAG answer: it is replayable incident evidence with an audit trail.",
+  "freshness_sensitive_dependencies": [
+    "contest_rules",
+    "submission_deadline",
+    "AMD Developer Cloud access",
+    "ROCm/vLLM/Qwen compatibility",
+    "Hugging Face Space state",
+    "Cloudflare tunnel URL",
+    "visible competitors"
+  ],
+  "freshness_cycle": [
+    "Re-open official AMD and Lablab pages before each final rehearsal.",
+    "Run scripts/amd_runtime_rehearsal.py on the AMD VM.",
+    "Run scripts/refresh_public_demo.py after the AMD-backed API is healthy.",
+    "Capture .runtime/amd_live_proof.json and .runtime/public_demo_status.json.",
+    "Update README, SUBMISSION, HACKATHON_READINESS, STATE, and state.json only from observed proof."
+  ],
+  "competitive_frame": {
+    "do_not_compete_on": "platform breadth",
+    "win_on": [
+      "evidence IDs",
+      "replayability",
+      "runtime truth",
+      "safe human-approved runbooks",
+      "judge-visible scorecard and packet"
+    ],
+    "risk_matrix": [
+      {
+        "risk": "ROCm AgentOps overlaps on agent trust, audit outputs, Qwen/vLLM, and operational workflow scoring.",
+        "counterargument": "InfraAgent should emphasize incident-replay evidence IDs, root-cause citations, and War Room Packet verification rather than a broad agent-ops command center."
+      },
+      {
+        "risk": "Aegis-like crisis automation projects may claim autonomous execution and broad operational scope.",
+        "counterargument": "InfraAgent rejects unverified auto-remediation and stays credible by requiring human approval for risky actions."
+      },
+      {
+        "risk": "ROCmPort/CUDA migration projects may score highly on AMD technical depth.",
+        "counterargument": "InfraAgent is Track 1 agentic workflow: AMD matters because local Qwen/vLLM critique is visible inside the incident triage loop."
+      },
+      {
+        "risk": "A broader AIOps or SOC entrant may look more complete at first glance.",
+        "counterargument": "InfraAgent is narrower but proves every step through evidence, citations, runtime truth, and packet export."
+      },
+      {
+        "risk": "ROCm tooling projects may show deeper low-level AMD optimization.",
+        "counterargument": "InfraAgent uses AMD as the runtime unlock for an end-to-end agentic workflow, not as a generic benchmark."
+      },
+      {
+        "risk": "Projects with stable hosting may outlast a Quick Tunnel.",
+        "counterargument": "Use a named Cloudflare Tunnel for final judging or refresh Quick Tunnel immediately before judging."
+      }
+    ]
+  },
+  "manual_skill_decision": {
+    "autoskill_install": "skip",
+    "reason": "The repository is small enough for direct rg/code inspection; no external skill discovery runtime is needed for the contest path.",
+    "selected_manual_skills": [
+      "repo rg search",
+      "pytest",
+      "FastAPI TestClient",
+      "Playwright or Gradio API smoke",
+      "official docs and GitHub issue research"
+    ],
+    "socraticode": "skip: shared codebase-intelligence layer is unnecessary for the current small repo."
+  },
+  "exploration_rule": "Use codebase search to navigate, but verify exact strings, errors, identifiers, and claims with known-string rg/search before changing or submitting."
+}

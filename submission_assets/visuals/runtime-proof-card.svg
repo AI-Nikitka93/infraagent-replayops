@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">InfraAgent runtime proof card</title>
+  <desc id="desc">Operational card showing target AMD stack, observed backend mode, and strict fallback truth.</desc>
+  <rect width="1280" height="720" fill="#F8FAFC"/>
+  <rect x="64" y="56" width="1152" height="608" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="2"/>
+  <text x="96" y="112" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="760" fill="#0F172A">Runtime Proof</text>
+  <text x="96" y="150" font-family="Inter, Arial, sans-serif" font-size="18" fill="#475569">Judges see target hardware and observed backend separately; fallback is never hidden.</text>
+  <g font-family="Inter, Arial, sans-serif">
+    <rect x="96" y="208" width="500" height="300" rx="8" fill="#EEF2F7" stroke="#CBD5E1"/>
+    <text x="128" y="258" font-size="22" font-weight="700" fill="#0F172A">Target Stack</text>
+    <text x="128" y="306" font-size="20" fill="#0F172A">AMD Developer Cloud MI300X</text>
+    <text x="128" y="348" font-size="20" fill="#0F172A">ROCm + vLLM OpenAI API</text>
+    <text x="128" y="390" font-size="20" fill="#0F172A">Qwen2.5-72B-Instruct</text>
+    <rect x="684" y="208" width="500" height="300" rx="8" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <text x="716" y="258" font-size="22" font-weight="700" fill="#0F172A">Observed Run</text>
+    <rect x="716" y="292" width="384" height="46" rx="6" fill="#FEF3C7" stroke="#A16207"/>
+    <text x="736" y="322" font-size="18" font-family="JetBrains Mono, Consolas, monospace" fill="#0F172A">fallback_without_live_vllm</text>
+    <text x="716" y="378" font-size="20" fill="#475569">Qwen critic: skipped until live_vllm</text>
+    <text x="716" y="420" font-size="20" fill="#475569">Readiness: blocked until AMD proof</text>
+    <text x="96" y="586" font-size="22" font-weight="700" fill="#B91C1C">Rule: no screenshot, video, or README may imply live AMD unless this panel says live_vllm.</text>
+  </g>
+</svg>

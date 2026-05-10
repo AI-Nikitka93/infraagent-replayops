@@ -4,12 +4,21 @@ import hashlib
 import json
 import os
 import time
+import warnings
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 from typing import Any, Literal
 
 import requests
 from dotenv import load_dotenv
+from langchain_core._api.deprecation import LangChainPendingDeprecationWarning
+
+warnings.filterwarnings(
+    "ignore",
+    message="The default value of `allowed_objects` will change in a future version.*",
+    category=LangChainPendingDeprecationWarning,
+)
+
 from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, MessagesState, StateGraph
@@ -70,6 +79,32 @@ def build_chat_model() -> ChatOpenAI:
 CHAT_MODEL = build_chat_model()
 TOOL_BOUND_MODEL = CHAT_MODEL.bind_tools(OBSERVABILITY_TOOLS)
 
+GLOSSARY = {
+    "Evidence ID": "Stable citation key attached to every metric, log, deploy event, trace, or topology record.",
+    "Runtime proof": "Observed backend health, model identity, latency, and AMD/vLLM truth note captured during the run.",
+    "Scorecard": "Deterministic evaluator that checks evidence coverage, citation coverage, root-cause match, and runbook completeness.",
+    "War Room Packet": "Portable incident artifact for judges and operators: summary, evidence, rejected alternatives, runbook, limitations, and audit seal.",
+    "Human approval": "Safety rule: InfraAgent recommends recovery actions but never executes destructive remediation.",
+}
+
+
+def detect_amd_runtime_evidence() -> dict[str, Any]:
+    device_signals = {
+        "/dev/kfd": os.path.exists("/dev/kfd"),
+        "/dev/dri": os.path.exists("/dev/dri"),
+    }
+    env_signals = {
+        "AMD_ACCELERATOR_NAME": os.getenv("AMD_ACCELERATOR_NAME", ""),
+        "ROCM_VISIBLE_DEVICES": os.getenv("ROCM_VISIBLE_DEVICES", ""),
+    }
+    return {
+        "ok": all(device_signals.values()),
+        "device_signals": device_signals,
+        "env_signals": env_signals,
+        "signals": [name for name, present in device_signals.items() if present],
+        "requirement": "Both /dev/kfd and /dev/dri must be visible to count a vLLM endpoint as AMD runtime proof.",
+    }
+
 
 def create_event(state: InfraAgentState, node: str, event_type: str, message: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
     return {
@@ -117,6 +152,7 @@ def bump_control(state: InfraAgentState, node: str) -> dict[str, Any]:
 def probe_runtime() -> dict[str, Any]:
     base_url = os.getenv("VLLM_BASE_URL", "http://127.0.0.1:8000/v1").rstrip("/")
     started = time.monotonic()
+    amd_runtime_evidence = detect_amd_runtime_evidence()
     proof: dict[str, Any] = {
         "checked_at": now_iso(),
         "model": os.getenv("VLLM_SERVED_MODEL_NAME", "qwen2.5-72b-instruct"),
@@ -126,6 +162,7 @@ def probe_runtime() -> dict[str, Any]:
         "runtime_stack": "ROCm + vLLM OpenAI-compatible API",
         "runtime_truth": "Target AMD stack configured; live runtime is not verified until /v1/models responds from the AMD VM.",
         "rocm_visible_devices": os.getenv("ROCM_VISIBLE_DEVICES", "not-set"),
+        "amd_runtime_evidence": amd_runtime_evidence,
         "backend_mode": "unverified",
         "models_endpoint": f"{base_url}/models",
     }
@@ -137,10 +174,16 @@ def probe_runtime() -> dict[str, Any]:
             body = response.json()
             ids = [item.get("id") for item in body.get("data", []) if isinstance(item, dict)]
             proof["available_models"] = ids
-            proof["backend_mode"] = "live_vllm"
-            proof["observed_hardware"] = os.getenv("AMD_ACCELERATOR_NAME", "AMD Developer Cloud GPU runtime observed by operator")
-            proof["runtime_truth"] = "Observed live vLLM OpenAI-compatible endpoint; model list returned successfully."
-            proof["healthy"] = True
+            if amd_runtime_evidence["ok"]:
+                proof["backend_mode"] = "live_vllm"
+                proof["observed_hardware"] = os.getenv("AMD_ACCELERATOR_NAME", "AMD Developer Cloud GPU runtime observed by operator")
+                proof["runtime_truth"] = "Observed live vLLM OpenAI-compatible endpoint with AMD runtime device proof."
+                proof["healthy"] = True
+            else:
+                proof["backend_mode"] = "runtime_unhealthy"
+                proof["healthy"] = False
+                proof["runtime_truth"] = "vLLM endpoint responded, but AMD runtime proof is missing; this does not count as live AMD/Qwen proof."
+                proof["error"] = "AMD runtime proof is missing."
         else:
             proof["backend_mode"] = "runtime_unhealthy"
             proof["healthy"] = False
@@ -232,6 +275,13 @@ def normalize_incident_context(raw: dict[str, Any]) -> dict[str, Any]:
         "ownership_hint": metadata["ownership_hint"],
         "business_risk": metadata["business_risk"],
         "manual_triage_baseline_minutes": metadata["manual_triage_baseline_minutes"],
+        "symptom": metadata["symptom"],
+        "service_owner": metadata["service_owner"],
+        "evidence_trail": metadata["evidence_trail"],
+        "recovery_summary": metadata["recovery_summary"],
+        "communication_targets": metadata["communication_targets"],
+        "post_recovery_checks": metadata["post_recovery_checks"],
+        "fixture_truth_note": metadata["fixture_truth_note"],
         "service": service,
         "environment": raw.get("environment") or metadata["environment"],
         "severity": raw.get("severity") or "critical",
@@ -413,7 +463,7 @@ def root_cause_analyst(state: InfraAgentState) -> dict[str, Any]:
         gaps = sorted(expected_ids - collected_ids)
     else:
         confidence = "low"
-        summary = f"Evidence is insufficient to identify the {context['service']} root cause."
+        summary = "No automated root cause selected because the evidence set is insufficient for safe remediation."
         gaps = sorted(expected_ids - collected_ids)
 
     rejected = [
@@ -431,9 +481,11 @@ def root_cause_analyst(state: InfraAgentState) -> dict[str, Any]:
         "confidence": confidence,
         "service": context["service"],
         "incident_type": metadata["incident_type"],
-        "supporting_evidence_ids": supporting,
+        "supporting_evidence_ids": supporting if confidence != "low" else [],
         "rejected_causes": rejected,
         "gaps": gaps,
+        "requires_human_review": confidence == "low",
+        "evidence_threshold": "Root cause can be selected only after expected evidence IDs are collected and cited.",
     }
     critic = qwen_critic_note(context, root_cause, state.get("runtime_proof", {}))
     root_cause["qwen_critic"] = critic
@@ -442,7 +494,7 @@ def root_cause_analyst(state: InfraAgentState) -> dict[str, Any]:
             "hypothesis_id": "h1",
             "summary": summary,
             "confidence": confidence,
-            "supporting_evidence_ids": supporting,
+            "supporting_evidence_ids": supporting if confidence != "low" else [],
             "counter_evidence_ids": [],
             "next_evidence_needed": gaps,
         },
@@ -561,6 +613,21 @@ def scenario_actions(incident_type: str, service: str) -> tuple[list[str], list[
                 "Restore higher concurrency only after TTFT remains stable during load simulation.",
             ],
         ),
+        "unknown_low_evidence": (
+            [
+                "Keep the incident in human review until metrics, logs, traces, deploy events, and topology agree.",
+                "Widen the telemetry window and confirm service owner before any remediation.",
+                "Do not rollback, scale, reroute, or mutate queues without corroborating evidence.",
+            ],
+            [
+                "Confirm a complete telemetry window is available.",
+                "Confirm ownership is assigned by the incident commander.",
+                "Confirm the selected root cause cites stable evidence IDs.",
+            ],
+            [
+                "Do not rollback until deploy correlation or dependency evidence is confirmed.",
+            ],
+        ),
     }
     return actions_by_type.get(incident_type, actions_by_type["deploy_regression"])
 
@@ -595,6 +662,8 @@ def runbook_generator(state: InfraAgentState) -> dict[str, Any]:
         "validation_steps": validation_steps,
         "rollback_plan": rollback_plan,
         "communication_summary": f"InfraAgent ReplayOps suspects: {root_cause.get('summary', 'insufficient evidence')}",
+        "communication_targets": incident.get("communication_targets", []),
+        "post_recovery_checks": incident.get("post_recovery_checks", []),
         "human_approval_required": True,
         "risk_notes": [
             "InfraAgent recommends actions but does not execute remediation.",
@@ -636,9 +705,17 @@ def build_business_case(state: InfraAgentState) -> dict[str, Any]:
     return {
         "pain_profile": context.get("pain_profile", []),
         "ownership_hint": context.get("ownership_hint"),
+        "service_owner": context.get("service_owner"),
+        "communication_targets": context.get("communication_targets", []),
+        "post_recovery_checks": context.get("post_recovery_checks", []),
         "business_risk": context.get("business_risk"),
+        "symptom": context.get("symptom"),
+        "evidence_trail": context.get("evidence_trail"),
+        "recovery_summary": context.get("recovery_summary"),
         "manual_triage_baseline_minutes": baseline_minutes,
         "observed_graph_duration_seconds": round(observed_ms / 1000, 2),
+        "product_proof": "A judge can replay each scenario through the polling API and inspect status, evidence, scorecard, and packet.",
+        "implementation_proof": "FastAPI, LangGraph, deterministic observability fixtures, runtime probe, and evaluator run as code paths in this repo.",
         "judge_value": [
             "Correlates metrics, logs, deploy events, traces, and topology into one packet.",
             "Preserves evidence IDs so judges can see why the root cause was selected.",
@@ -677,15 +754,26 @@ def build_war_room_packet(state: InfraAgentState, eval_scorecard: dict[str, Any]
         f"Severity: `{context['severity']}`",
         f"Runtime mode: `{state.get('runtime_proof', {}).get('backend_mode', 'unknown')}`",
         "",
+        "## Summary",
+        f"- Symptom: {context.get('symptom', context.get('description', 'not returned'))}",
+        f"- Automated conclusion: {root_cause.get('summary', 'No root cause returned.')}",
+        f"- Recovery summary: {context.get('recovery_summary', 'not returned')}",
+        f"- Fixture truth: {context.get('fixture_truth_note', 'Deterministic mock observability fixture.')}",
+        "",
         "## Business / Ownership Lens",
         f"- Pain profile: {', '.join(business_case.get('pain_profile', []))}",
         f"- Owner routing: {business_case.get('ownership_hint', 'unknown')}",
+        f"- Service owner: {business_case.get('service_owner', 'unknown')}",
         f"- Business risk: {business_case.get('business_risk', 'unknown')}",
         f"- Manual triage baseline: `{business_case.get('manual_triage_baseline_minutes', 'n/a')} minutes`",
+        f"- Product proof: {business_case.get('product_proof')}",
+        f"- Implementation proof: {business_case.get('implementation_proof')}",
         "",
         "## Root Cause",
         f"- Confidence: `{root_cause.get('confidence', 'unknown')}`",
         f"- Summary: {root_cause.get('summary', 'No root cause returned.')}",
+        f"- Supporting evidence IDs: {', '.join(f'`{item}`' for item in root_cause.get('supporting_evidence_ids', [])) or 'none'}",
+        f"- Human review required: `{root_cause.get('requires_human_review', False)}`",
         "",
         "## Evidence",
     ]
@@ -693,16 +781,41 @@ def build_war_room_packet(state: InfraAgentState, eval_scorecard: dict[str, Any]
         lines.append(f"- `{item.get('evidence_id')}` [{item.get('group')}] {item.get('summary') or item.get('message')}")
     lines.extend([
         "",
+        "## Rejected Alternatives",
+    ])
+    for item in root_cause.get("rejected_causes", []):
+        lines.append(f"- {item.get('summary')}: {item.get('reason')}")
+    if not root_cause.get("rejected_causes"):
+        lines.append("- No alternatives returned.")
+    lines.extend([
+        "",
         "## Runbook",
     ])
     for action in runbook.get("immediate_actions", []):
         lines.append(f"- {action}")
+    lines.append("")
+    lines.append("## Communication / Post-Restore Checks")
+    lines.append("- Notify: " + (", ".join(runbook.get("communication_targets", [])) or "not returned"))
+    for check in runbook.get("post_recovery_checks", []):
+        lines.append(f"- Post-restore: {check}")
     lines.extend([
         "",
         "## Evaluation",
         f"- Score: `{eval_scorecard.get('score')}/{eval_scorecard.get('max_score')}`",
         f"- Grade: `{eval_scorecard.get('grade')}`",
         f"- Verdict: {eval_scorecard.get('verdict')}",
+        "",
+        "## Limitations / Runtime Truth",
+        f"- Runtime truth: {state.get('runtime_proof', {}).get('runtime_truth', 'not returned')}",
+        f"- Qwen critic: {(root_cause.get('qwen_critic') or {}).get('status', 'not returned')}",
+        "- Deterministic observability fixtures are used for the hackathon demo; they are not fake production telemetry.",
+        "- Public UI uses polling against FastAPI and never exposes raw vLLM.",
+        "",
+        "## Glossary",
+    ])
+    for term, definition in GLOSSARY.items():
+        lines.append(f"- {term}: {definition}")
+    lines.extend([
         "",
         "## Safety",
         "- No remediation was executed automatically.",
@@ -735,6 +848,10 @@ def verification_gate(state: InfraAgentState) -> dict[str, Any]:
         status = "needs_human_review"
         approval = "human_review"
         message = "Loop protection reached max steps; returning partial triage for human review."
+    elif root_cause.get("requires_human_review"):
+        status = "needs_human_review"
+        approval = "human_review"
+        message = "Evidence is insufficient for automated root-cause selection; human review required."
     elif has_evidence and has_root_cause_evidence and has_runbook_actions and eval_scorecard["grade"] == "pass":
         status = "ready"
         approval = "approved"
